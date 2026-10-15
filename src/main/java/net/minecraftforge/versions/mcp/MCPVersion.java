@@ -5,11 +5,12 @@
 
 package net.minecraftforge.versions.mcp;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import net.minecraftforge.fml.Logging;
 import net.minecraftforge.fml.loading.FMLLoader;
 import net.minecraftforge.fml.loading.JarVersionLookupHandler;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 public class MCPVersion {
     private static final Logger LOGGER = LogManager.getLogger();

@@ -5,15 +5,16 @@
 
 package net.minecraftforge.network.filters;
 
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.MessageToMessageEncoder;
 import java.util.AbstractMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
-import net.minecraft.network.Connection;
+
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.MessageToMessageEncoder;
 import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.Connection;
 import org.jetbrains.annotations.NotNull;
 
 /**

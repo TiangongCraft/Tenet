@@ -699,9 +699,9 @@ public class ForgeRegistry<V> implements IForgeRegistryInternal<V>, IForgeRegist
         // Building a good looking table is not cheap, so only do it if the debug logger is enabled.
         if (LOGGER.isDebugEnabled(REGISTRYDUMP)) {
             TablePrinter<DumpRow> tab = new TablePrinter<DumpRow>()
-                    .header("ID",    r -> r.id)
-                    .header("Key",   r -> r.key)
-                    .header("Value", r -> r.value);
+                .header("ID",    r -> r.id)
+                .header("Key",   r -> r.key)
+                .header("Value", r -> r.value);
 
             LOGGER.debug(REGISTRYDUMP, ()-> LogMessageAdapter.adapt(sb -> {
                 sb.append("Registry Name: ").append(name).append('\n');

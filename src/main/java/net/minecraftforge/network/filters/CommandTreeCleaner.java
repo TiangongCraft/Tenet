@@ -5,14 +5,15 @@
 
 package net.minecraftforge.network.filters;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Predicate;
+
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.tree.ArgumentCommandNode;
 import com.mojang.brigadier.tree.CommandNode;
 import com.mojang.brigadier.tree.RootCommandNode;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.function.Predicate;
 
 class CommandTreeCleaner
 {

@@ -327,7 +327,7 @@ public class GameData {
                 if (forgeRegistry != null)
                     forgeRegistry.freeze();
                 LOGGER.debug(REGISTRIES, MohistMC.i18n.as("mohist.i18n.186", registryKey.location()));
-                ObjectHolderRegistry.applyObjectHolders(registryKey.location()::equals);
+                ObjectHolderRegistry.applyObjectHolders(registryKey.location());
                 LOGGER.debug(REGISTRIES, MohistMC.i18n.as("mohist.i18n.187", registryKey.location()));
             } catch (Throwable t)
             {
@@ -637,8 +637,8 @@ public class GameData {
                 if (!lst.isEmpty())
                 {
                     LOGGER.error(REGISTRIES, () -> LogMessageAdapter.adapt(sb -> {
-                        sb.append("Unidentified mapping from registry ").append(name).append('\n');
-                        lst.stream().sorted().forEach(map -> sb.append('\t').append(map.key).append(": ").append(map.id).append('\n'));
+                       sb.append("Unidentified mapping from registry ").append(name).append('\n');
+                       lst.stream().sorted().forEach(map -> sb.append('\t').append(map.key).append(": ").append(map.id).append('\n'));
                     }));
                 }
                 event.getAllMappings(reg.getRegistryKey()).stream()
@@ -654,9 +654,9 @@ public class GameData {
             if (!defaulted.isEmpty())
             {
                 String header = "Forge Mod Loader detected missing registry entries.\n\n" +
-                        "There are " + defaulted.size() + " missing entries in this save.\n" +
-                        "If you continue the missing entries will get removed.\n" +
-                        "A world backup will be automatically created in your saves directory.\n\n";
+                   "There are " + defaulted.size() + " missing entries in this save.\n" +
+                   "If you continue the missing entries will get removed.\n" +
+                   "A world backup will be automatically created in your saves directory.\n\n";
 
                 StringBuilder buf = new StringBuilder();
                 defaulted.asMap().forEach((name, entries) ->

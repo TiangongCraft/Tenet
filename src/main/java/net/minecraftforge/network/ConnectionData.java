@@ -8,13 +8,16 @@ package net.minecraftforge.network;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Multimap;
+
+import net.minecraft.resources.ResourceLocation;
+import net.minecraftforge.fml.ModList;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.fml.ModList;
+
 import org.apache.commons.lang3.tuple.Pair;
 
 public class ConnectionData

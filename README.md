@@ -1,10 +1,10 @@
 <div align="center">
-  <h1>Mohist 1.20.1</h1>
+  <h1>Tenet 1.20.1</h1>
 
 ### Minecraft Forge Hybrid server implementing the Spigot/Bukkit API, formerly known as Thermos/Cauldron/MCPC+
 
 [![](https://img.shields.io/github/stars/MohistMC/Mohist.svg?label=Stars&logo=github)](https://github.com/MohistMC/Mohist/stargazers)
-[![](https://img.shields.io/badge/Forge-1.20.1--47.4.26-brightgreen.svg?colorB=26303d&logo=Conda-Forge)](https://files.minecraftforge.net/net/minecraftforge/forge/index_1.20.1.html)
+[![](https://img.shields.io/badge/Forge-1.20.1--47.4.28-brightgreen.svg?colorB=26303d&logo=Conda-Forge)](https://files.minecraftforge.net/net/minecraftforge/forge/index_1.20.1.html)
 [![](https://img.shields.io/badge/NeoForge-1.20.1--47.1.106-brightgreen.svg?colorB=26303d)](https://neoforged.net/)
 [![](https://img.shields.io/badge/JDK-17.0.14-brightgreen.svg?colorB=469C00&logo=java)](https://www.azul.com/downloads/?version=java-17-lts#zulu)
 [![](https://img.shields.io/badge/Gradle-8.12.1-brightgreen.svg?colorB=469C00&logo=gradle)](https://docs.gradle.org/8.12.1/release-notes.html)
@@ -20,7 +20,7 @@
 Progress
 ------
 
-- [x] Rectify Forge([**0ec923d73**](https://github.com/MinecraftForge/MinecraftForge/commit/0ec923d73))
+- [x] Rectify Forge([**d13dd327b**](https://github.com/MinecraftForge/MinecraftForge/commit/d13dd327b))
 - [x] Rectify NeoForge([**e7ac32353**](https://github.com/neoforged/NeoForge/commit/e7ac32353))
 - [x] Start patch
     * [x] Bukkit([**997de31d**](https://hub.spigotmc.org/stash/projects/SPIGOT/repos/bukkit/commits/997de31d))

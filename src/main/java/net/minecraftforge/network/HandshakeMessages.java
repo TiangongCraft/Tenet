@@ -5,14 +5,6 @@
 
 package net.minecraftforge.network;
 
-import com.google.common.collect.Maps;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.function.IntSupplier;
-import java.util.stream.Collectors;
 import net.minecraft.core.Registry;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceKey;
@@ -22,7 +14,18 @@ import net.minecraftforge.forgespi.language.IModInfo;
 import net.minecraftforge.registries.DataPackRegistriesHooks;
 import net.minecraftforge.registries.ForgeRegistry;
 import net.minecraftforge.registries.RegistryManager;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.IntSupplier;
+import java.util.stream.Collectors;
+
 import org.apache.commons.lang3.tuple.Pair;
+
+import com.google.common.collect.Maps;
 import org.jetbrains.annotations.Nullable;
 
 public class HandshakeMessages

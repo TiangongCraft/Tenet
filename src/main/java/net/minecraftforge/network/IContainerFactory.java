@@ -5,10 +5,10 @@
 
 package net.minecraftforge.network;
 
-import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.MenuType;
+import net.minecraft.network.FriendlyByteBuf;
 
 public interface IContainerFactory<T extends AbstractContainerMenu> extends MenuType.MenuSupplier<T>
 {

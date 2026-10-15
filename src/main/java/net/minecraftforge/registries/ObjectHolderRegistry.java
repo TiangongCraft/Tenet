@@ -5,7 +5,6 @@
 
 package net.minecraftforge.registries;
 
-import com.google.common.collect.Maps;
 import com.mohistmc.MohistMC;
 import java.lang.annotation.ElementType;
 import java.lang.reflect.Field;
@@ -13,14 +12,20 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.forgespi.language.ModFileScanData;
+
+import com.google.common.collect.Maps;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
@@ -38,10 +43,22 @@ public class ObjectHolderRegistry
      * The internal list is backed by a HashSet so it is HIGHLY recommended you implement a proper equals
      * and hashCode function to de-duplicate callers here.
      * The default @ObjectHolder implementation uses the hashCode/equals for the field the annotation is on.
+     *
+     * @deprecated Use {{@link #addHandler(ResourceLocation, Runnable)} if you are only targeting a single registry
      */
     public static synchronized void addHandler(Consumer<Predicate<ResourceLocation>> ref)
     {
         objectHolders.add(ref);
+    }
+
+
+    /**
+     * Registers a handler that is run after the named registry has been injected and finalized.
+     * Handlers are kept in a HashSet per registry, so the same instance is only ever registered once.
+     */
+    public static synchronized void addHandler(ResourceLocation registry, Runnable ref)
+    {
+        namedHandlers.computeIfAbsent(registry, id -> new HashSet<>()).add(ref);
     }
 
     /**
@@ -58,12 +75,36 @@ public class ObjectHolderRegistry
         return objectHolders.remove(ref);
     }
 
+    /**
+     * Removes a handler registered with {@link #addHandler(ResourceLocation, Runnable)}.
+     *
+     * @return true if handler was matched and removed.
+     */
+    public static synchronized boolean removeHandler(ResourceLocation registry, Runnable ref)
+    {
+        var handlers = namedHandlers.get(registry);
+        return handlers != null && handlers.remove(ref);
+    }
+
+    /**
+     * Registers a check that is run once, before the handlers of the next holder pass.
+     * Used to report holders that point at a registry that does not exist.
+     */
+    public static synchronized void addValidator(Runnable ref)
+    {
+        validators.add(ref);
+    }
+
     //==============================================================
     // Everything below is internal, do not use.
     //==============================================================
 
     private static final Logger LOGGER = LogManager.getLogger();
     private static final Set<Consumer<Predicate<ResourceLocation>>> objectHolders = new HashSet<>();
+    // Order is not guaranteed, the old implementation kept every handler in one HashSet.
+    private static final Map<ResourceLocation, Set<Runnable>> namedHandlers = new HashMap<>();
+    private static final List<Runnable> validators = new ArrayList<>();
+
     private static final Type OBJECT_HOLDER = Type.getType(ObjectHolder.class);
     private static final Type MOD = Type.getType(Mod.class);
     // Hardcoded list of vanilla classes that should have object holders for each field of the given registry type.
@@ -81,48 +122,59 @@ public class ObjectHolderRegistry
     public static void findObjectHolders()
     {
         LOGGER.debug(ForgeRegistry.REGISTRIES,"Processing ObjectHolder annotations");
-        final List<ModFileScanData.AnnotationData> annotations = ModList.get().getAllScanData().stream()
-            .map(ModFileScanData::getAnnotations)
-            .flatMap(Collection::stream)
-            .filter(a -> OBJECT_HOLDER.equals(a.annotationType()) || MOD.equals(a.annotationType()))
-            .toList();
+        final HashMap<Type, String> classModIds = new HashMap<>();
+        final List<ModFileScanData.AnnotationData> annotations = new ArrayList<>();
 
-        if (annotations.stream().noneMatch(a -> OBJECT_HOLDER.equals(a.annotationType())))
-            return; // No object holders found, skip the rest of the processing
+        for (var data : ModList.get().getAllScanData()) {
+            for (var annotation : data.getAnnotations()) {
+                if (OBJECT_HOLDER.equals(annotation.annotationType())) {
+                    annotations.add(annotation);
+                }
+                // Gather all @Mod classes so that @ObjectHolder's in those classes don't need to specify the mod id; modder convenience
+                else if (MOD.equals(annotation.annotationType())) {
+                    classModIds.put(annotation.clazz(), (String)annotation.annotationData().get("value"));
+                }
+            }
+        }
 
-        Map<Type, String> classModIds = Maps.newHashMap();
+        // this is never actually true as we have an annotation in ConditionalRecipe, but also we want to always run the vanilla holders
+        /*
+        if (annotations.isEmpty()) {
+             return; // No object holders found, skip the rest of the processing,
+        }
+        */
+
         Map<Type, Class<?>> classCache = Maps.newHashMap();
 
-        // Gather all @Mod classes so that @ObjectHolder's in those classes don't need to specify the mod id; modder convenience
-        annotations.stream()
-                .filter(a -> MOD.equals(a.annotationType()))
-                .forEach(data -> classModIds.put(data.clazz(), (String)data.annotationData().get("value")));
-
         // Validate all the vanilla class-level object holders then scan those first
-        VANILLA_OBJECT_HOLDERS.forEach(data -> {
-            try
-            {
+        for (var data : VANILLA_OBJECT_HOLDERS) {
+            try {
                 Class<?> holderClass = Class.forName(data.holderClass(), true, ObjectHolderRegistry.class.getClassLoader());
                 Class<?> registryClass = Class.forName(data.registryType(), true, ObjectHolderRegistry.class.getClassLoader());
 
                 Type holderType = Type.getType(holderClass);
                 classCache.put(holderType, holderClass);
                 scanTarget(classModIds, classCache, holderType, null, registryClass, data.registryName(), "minecraft", true, true);
+            } catch (ClassNotFoundException e) {
+                throw new RuntimeException("Vanilla class not found, should not be possible", e);
             }
-            catch (ClassNotFoundException e)
-            {
-                throw new RuntimeException(MohistMC.i18n.as("mohist.i18n.213"), e);
-            }
-        });
+        }
 
         // Scan actual fields annotated with @ObjectHolder second
-        annotations.stream()
-                .filter(a -> OBJECT_HOLDER.equals(a.annotationType())).filter(a -> a.targetType() == ElementType.FIELD)
-                .forEach(data -> scanTarget(classModIds, classCache, data.clazz(),
-                        data.memberName(), null, (String)data.annotationData().get("registryName"),
-                        (String)data.annotationData().get("value"), false, false));
+        for (var data : annotations) {
+            if (data.targetType() == ElementType.FIELD) {
+                var registry = (String)data.annotationData().get("registryName");
+                var name = (String)data.annotationData().get("value");
+                scanTarget(classModIds, classCache, data.clazz(), data.memberName(), null, registry, name, false, false);
+            }
+            // This is where we WOULD scan for class targets, but Shrimp broke that in 1.19 and so I don't want to re-add a feature that apparently nobody used.
+        }
 
-        LOGGER.debug(ForgeRegistry.REGISTRIES, MohistMC.i18n.as("mohist.i18n.214", objectHolders.size()));
+        int count = objectHolders.size();
+        for (var set : namedHandlers.values())
+            count += set.size();
+
+        LOGGER.debug(ForgeRegistry.REGISTRIES, "Found {} ObjectHolder annotations", count);
     }
 
     private static void scanTarget(Map<Type, String> classModIds, Map<Type, Class<?>> classCache, Type type,
@@ -147,9 +199,10 @@ public class ObjectHolderRegistry
                 throw new RuntimeException(ex);
             }
         }
+        ResourceLocation regName = ResourceLocation.parse(registryName);
         if (isClass)
         {
-            scanClassForFields(classModIds, type, new ResourceLocation(registryName), registryClass, value, clazz, extractFromValue);
+            scanClassForFields(classModIds, type, regName, registryClass, value, clazz, extractFromValue);
         }
         else
         {
@@ -158,7 +211,7 @@ public class ObjectHolderRegistry
                 String prefix = classModIds.get(type);
                 if (prefix == null)
                 {
-                    LOGGER.warn(ForgeRegistry.REGISTRIES, MohistMC.i18n.as("mohist.i18n.215", value, type, annotationTarget));
+                    LOGGER.warn(ForgeRegistry.REGISTRIES,"Found an unqualified ObjectHolder annotation ({}) without a modid context at {}.{}, ignoring", value, type, annotationTarget);
                     throw new IllegalStateException("Unqualified reference to ObjectHolder");
                 }
                 value = prefix + ':' + value;
@@ -166,9 +219,9 @@ public class ObjectHolderRegistry
             try
             {
                 Field f = clazz.getDeclaredField(annotationTarget);
-                ObjectHolderRef ref = ObjectHolderRef.create(new ResourceLocation(registryName), f, value, extractFromValue);
+                ObjectHolderRef ref = ObjectHolderRef.create(regName, f, value, extractFromValue);
                 if (ref != null)
-                    addHandler(ref);
+                    addHandler(regName, ref);
             }
             catch (NoSuchFieldException ex)
             {
@@ -189,7 +242,7 @@ public class ObjectHolderRegistry
                 continue;
             ObjectHolderRef ref = ObjectHolderRef.create(registryName, f, value + ':' + f.getName().toLowerCase(Locale.ENGLISH), extractFromExistingValues);
             if (ref != null)
-                addHandler(ref);
+                addHandler(registryName, ref);
         }
     }
 
@@ -202,41 +255,118 @@ public class ObjectHolderRegistry
         if (classRegistryNames.containsKey(targetClass))
             return classRegistryNames.get(targetClass);
 
-        throw new IllegalStateException(MohistMC.i18n.as("mohist.i18n.216", declaration));
+        throw new IllegalStateException("No registry name was declared for " + declaration);
     }
 
-    public static void applyObjectHolders()
-    {
-        try
-        {
-            LOGGER.debug(ForgeRegistry.REGISTRIES, MohistMC.i18n.as("mohist.i18n.217"));
-            applyObjectHolders(key -> true);
-            LOGGER.debug(ForgeRegistry.REGISTRIES, MohistMC.i18n.as("mohist.i18n.219"));
-        } catch (RuntimeException e)
-        {
+
+    private static final Predicate<ResourceLocation> ALWAYS_TRUE = name -> true;
+    public static void applyObjectHolders() {
+        try {
+            LOGGER.debug(ForgeRegistry.REGISTRIES, "Applying holder lookups");
+            var exceptions = new ArrayList<Exception>();
+            validate(exceptions);
+            // Call named registries
+            for (var handlers : namedHandlers.values())
+                apply(handlers, exceptions);
+
+            // Call legacy for backward compatibility
+            if (!objectHolders.isEmpty())
+                apply(ALWAYS_TRUE, objectHolders, exceptions);
+
+            throwIfNeeded(exceptions);
+            LOGGER.debug(ForgeRegistry.REGISTRIES, "Holder lookups applied");
+        } catch (RuntimeException e) {
             // It is more important that the calling contexts continue without exception to prevent further cascading errors
             LOGGER.error("", e);
         }
     }
 
+    /**
+     * @deprecated use {@link #applyObjectHolders(ResourceLocation)}
+     */
     public static void applyObjectHolders(Predicate<ResourceLocation> filter)
     {
-        RuntimeException aggregate = new RuntimeException(MohistMC.i18n.as("mohist.i18n.218"));
-        objectHolders.forEach(objectHolder -> {
-            try
-            {
-                objectHolder.accept(filter);
-            }
-            catch (Exception e)
-            {
-                aggregate.addSuppressed(e);
-            }
-        });
+        LOGGER.debug(ForgeRegistry.REGISTRIES, "Apply filtered holder lookups");
+        var exceptions = new ArrayList<Exception>();
+        validate(exceptions);
 
-        if (aggregate.getSuppressed().length > 0)
-        {
-            throw aggregate;
+        // call new registries if needed
+        for (var entry : namedHandlers.entrySet()) {
+            if (filter.test(entry.getKey())) {
+                apply(entry.getValue(), exceptions);
+            }
         }
+
+        // Call legacy
+        if (!objectHolders.isEmpty())
+            apply(filter, objectHolders, exceptions);
+
+        throwIfNeeded(exceptions);
+        LOGGER.debug(ForgeRegistry.REGISTRIES, "Holder lookups applied");
+    }
+
+    /** Runs the handlers of one registry. */
+    public static void applyObjectHolders(ResourceLocation registry) {
+        var exceptions = new ArrayList<Exception>();
+        validate(exceptions);
+
+        var handlers = namedHandlers.get(registry);
+        if (handlers != null)
+            apply(handlers, exceptions);
+
+        if (!objectHolders.isEmpty())
+            apply(registry::equals, objectHolders, exceptions);
+
+        throwIfNeeded(exceptions);
+    }
+
+    // Each validator runs once, at the first holder pass after it was registered.
+    private static void validate(List<Exception> exceptions) {
+        List<Runnable> pending;
+        synchronized (ObjectHolderRegistry.class) {
+            if (validators.isEmpty())
+                return;
+            pending = new ArrayList<>(validators);
+            validators.clear();
+        }
+
+        for (var validator : pending) {
+            try {
+                validator.run();
+            } catch (Exception e) {
+                exceptions.add(e);
+            }
+        }
+    }
+
+    private static void apply(Set<Runnable> handlers, List<Exception> exceptions) {
+        for (var handler : handlers) {
+            try {
+                handler.run();
+            } catch (Exception e) {
+                exceptions.add(e);
+            }
+        }
+    }
+
+    private static void apply(Predicate<ResourceLocation> filter, Set<Consumer<Predicate<ResourceLocation>>> handlers, List<Exception> exceptions) {
+        for (var handler : handlers) {
+            try {
+                handler.accept(filter);
+            } catch (Exception e) {
+                exceptions.add(e);
+            }
+        }
+    }
+
+    private static void throwIfNeeded(List<Exception> exceptions) {
+        if (exceptions.isEmpty())
+            return;
+
+        var aggregate = new RuntimeException("Failed to apply some object holders, see suppressed exceptions for details");
+        for (var e : exceptions)
+            aggregate.addSuppressed(e);
+        throw aggregate;
     }
 
     private record VanillaObjectHolderData(String holderClass, String registryName, String registryType) {}

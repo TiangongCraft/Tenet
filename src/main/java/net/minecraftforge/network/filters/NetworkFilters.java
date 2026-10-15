@@ -5,13 +5,16 @@
 
 package net.minecraftforge.network.filters;
 
-import com.google.common.collect.ImmutableMap;
-import io.netty.channel.ChannelPipeline;
 import java.util.Map;
 import java.util.function.Function;
+
+import io.netty.channel.ChannelPipeline;
 import net.minecraft.network.Connection;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import com.google.common.collect.ImmutableMap;
 
 public class NetworkFilters
 {

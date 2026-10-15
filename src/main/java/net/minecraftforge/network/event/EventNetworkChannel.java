@@ -5,14 +5,15 @@
 
 package net.minecraftforge.network.event;
 
-import java.util.function.Consumer;
-import java.util.function.Predicate;
-import java.util.function.Supplier;
 import net.minecraft.network.Connection;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.network.NetworkEvent;
 import net.minecraftforge.network.NetworkInstance;
 import net.minecraftforge.network.NetworkRegistry;
+
+import java.util.function.Consumer;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 /**
  * An event-bus like object on which {@link NetworkEvent}s are posted.

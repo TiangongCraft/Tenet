@@ -6,6 +6,7 @@
 package net.minecraftforge.registries.holdersets;
 
 import com.mojang.serialization.Codec;
+
 import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceKey;
