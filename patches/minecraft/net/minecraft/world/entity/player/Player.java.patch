@@ -702,7 +702,7 @@
 +                  // CraftBukkit end
                 }
              }
-+            // this.resetAttackStrengthTicker(); // FORGE: Moved from beginning of attack() so that getAttackStrengthScale() returns an accurate value during all attack events // Mohist TODO
++            this.m_36334_(); // FORGE: Moved from beginning of attack() so that getAttackStrengthScale() returns an accurate value during all attack events
  
           }
        }
