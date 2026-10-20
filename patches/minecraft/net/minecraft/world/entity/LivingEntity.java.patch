@@ -719,6 +719,21 @@
                    if (livingentity2 instanceof Player) {
                       Player player = (Player)livingentity2;
                       this.f_20888_ = player;
+@@ -1160,6 +_,14 @@
+             }
+          } else if (flag1) {
+             this.m_6677_(p_21016_);
++            // Mohist start - Player.playSound excludes the victim, so its own hurt sound must be sent directly
++            if (this instanceof ServerPlayer serverplayer) {
++               SoundEvent soundevent1 = this.m_7975_(p_21016_);
++               if (soundevent1 != null) {
++                  serverplayer.m_6330_(soundevent1, this.m_5720_(), this.m_6121_(), this.m_6100_());
++               }
++            }
++            // Mohist end
+          }
+ 
+          boolean flag2 = !flag || p_21017_ > 0.0F;
 @@ -1171,7 +_,7 @@
           if (this instanceof ServerPlayer) {
              CriteriaTriggers.f_10574_.m_35174_((ServerPlayer)this, p_21016_, f, p_21017_, flag);
