@@ -1716,9 +1716,9 @@
              this.m_21253_();
           } else {
              if (!this.f_20935_.m_41619_() && this.m_6117_()) {
-+               if (!this.m_6084_()) {
-+                  ((ServerPlayer) this).getBukkitEntity().updateInventory();
-+                  ((ServerPlayer) this).getBukkitEntity().updateScaledHealth();
++               if (!this.m_6084_() && this instanceof ServerPlayer serverPlayer) {
++                  serverPlayer.getBukkitEntity().updateInventory();
++                  serverPlayer.getBukkitEntity().updateScaledHealth();
 +                  return; // Mohist fix capability null
 +               }
                 this.m_21137_(this.f_20935_, 16);
@@ -1728,7 +1728,7 @@
 +               ItemStack copy = this.f_20935_.m_41777_();
 +               // CraftBukkit start - fire PlayerItemConsumeEvent
 +               ItemStack itemstack;
-+               if (this instanceof ServerPlayer) {
++               if (this instanceof ServerPlayer serverPlayer) {
 +                  org.bukkit.inventory.ItemStack craftItem = CraftItemStack.asBukkitCopy(copy);
 +                  org.bukkit.inventory.EquipmentSlot hand = org.bukkit.craftbukkit.v1_20_R1.CraftEquipmentSlot.getHand(interactionhand);
 +                  PlayerItemConsumeEvent event = new PlayerItemConsumeEvent((org.bukkit.entity.Player) this.getBukkitEntity(), craftItem, hand);
@@ -1736,8 +1736,8 @@
 +
 +                  if (event.isCancelled()) {
 +                     // Update client
-+                     ((ServerPlayer) this).getBukkitEntity().updateInventory();
-+                     ((ServerPlayer) this).getBukkitEntity().updateScaledHealth();
++                     serverPlayer.getBukkitEntity().updateInventory();
++                     serverPlayer.getBukkitEntity().updateScaledHealth();
 +                     return;
 +                  }
 +                  itemstack = (craftItem.equals(event.getItem())) ? this.f_20935_.m_41671_(this.m_9236_(), this) : CraftItemStack.asNMSCopy(event.getItem()).m_41671_(this.m_9236_(), this);
