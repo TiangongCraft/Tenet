@@ -39,6 +39,7 @@ import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.TimeZone;
 
 public abstract class Action {
 
@@ -93,10 +94,16 @@ public abstract class Action {
     }
 
     protected void run(String mainClass, String[] args) throws Exception {
+        TimeZone original = TimeZone.getDefault();
         List<URL> classPath = stringToUrl(installerTourls);
         System.out.println("[Mohist] Loading " + classPath);
         URLClassLoader loader = URLClassLoader.newInstance(classPath.toArray(new URL[0]));
-        Class.forName(mainClass, true, loader).getDeclaredMethod("main", String[].class).invoke(null, new Object[]{args});
+        try {
+            Class.forName(mainClass, true, loader).getDeclaredMethod("main", String[].class).invoke(null, new Object[]{args});
+        } finally {
+            // Forge installer tools force GMT for reproducible archives.
+            TimeZone.setDefault(original);
+        }
         loader.clearAssertionStatus();
         loader.close();
     }
